@@ -1,0 +1,1 @@
+fetch('https://www.babycenter.com/pregnancy/week-by-week/4-weeks-pregnant').then(r=>r.text()).then(t=>{ const urls = t.match(/https:\/\/[^"]+\.(jpg|png|webp)/ig); console.log([...new Set(urls)].slice(0, 20).join('\n')); });
