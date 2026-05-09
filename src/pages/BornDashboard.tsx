@@ -54,101 +54,24 @@ export default function BornDashboard({ profile, onReset }: { profile: any, onRe
 
   useEffect(() => {
     const fetchAIInsights = async () => {
-      try {
-        // Check cache first
-        const cacheKey = `born_ai_cache_${babyAgeDays}_${profile.weight}_${profile.age}_${profile.height}_${profile.isWorking}_${profile.workStart}_${profile.workEnd}_${profile.primaryGoal}_${new Date().toDateString()}`;
-        const cached = sessionStorage.getItem(cacheKey);
-        
-        if (cached) {
-          const aiData = JSON.parse(cached);
-          setCoachMessage(aiData.coachMessage);
-          setDynamicInfo({ babyDev: aiData.babyDev, tips: aiData.tips });
-          setDailyTip({
-            title: aiData.dailyTip.title,
-            text: aiData.dailyTip.text,
-            icon: <Sparkles size={24} color="var(--color-primary)" />
-          });
-          if (aiData.alertCard && aiData.alertCard.hasAlert) setAlertCard(aiData.alertCard);
-          if (aiData.blogs && Array.isArray(aiData.blogs)) setBlogs(aiData.blogs);
-          
-          setIsAILoading(false);
-          setTimeout(() => setShowPopup(true), 800);
-          return;
-        }
-
-        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
-        const prompt = `Sen uzman, şefkatli ve destekleyici bir "Doğum Sonrası (Postpartum) ve Bebek Gelişimi Asistanısın".
-Kullanıcının profili: Yaş: ${profile.age}, Kilo: ${profile.weight}, Çalışma Durumu: ${profile.isWorking ? 'Çalışıyor' : 'Çalışmıyor'}.
-Durum: Bebeği ${babyAgeDays} günlük (Yaklaşık ${babyAgeMonths} aylık / ${babyAgeWeeks} haftalık). Evre: "${phase}".
-
-DİKKAT! KULLANICININ UYGULAMADAKİ ANA HEDEFİ ŞUDUR: "${profile.primaryGoal === 'mom_focus' ? 'Kendi vücudundaki lohusalık değişimleri, psikolojisi ve toparlanmasını öncelikli olarak takip etmek.' : profile.primaryGoal === 'medical_focus' ? 'Tıbbi süreci, bebek kontrollerini ve olası komplikasyonları ciddiye almak.' : 'Bebeğin gelişimini yakından takip etmek ve bebeği önceliklendirmek.'}". 
-
-Görev 1: Kullanıcıya (anneye) okuyacağı, moral verici, şefkatli ve profesyonel bir mesaj yaz (coachMessage). Anneliği öv ve mesaj tonunu ANA HEDEFE göre ayarla.
-Görev 2: Bebeğin ${babyAgeDays} günlük gelişimine ve annenin uyku/stres durumuna uygun bir günlük tavsiye ver (dailyTip). ANA HEDEF'i dikkate al.
-Görev 3: Bebeğin şu anki ayında/haftasında vücudunda, motor ve zihinsel gelişiminde neler olduğunu detaylı anlat (babyDev).
-Görev 4: Annenin lohusalık/doğum sonrası vücut toparlanması ve ruh sağlığı için yapması gerekenler hakkında akıcı bir tavsiye metni ver (tips).
-Görev 5: Annenin durumu veya bebeğin yaşı riskli bir aşı/kontrol dönemi ise veya dikkat edilmesi gereken bir semptom (örn: lohusa depresyonu, ateş vs.) için "Kontrol Zamanı" kartı oluştur. Yoksa false döndür.
-Görev 6: Kullanıcının şu anki lohusalık/bebek evresine uygun 6 adet kişiye özel blog yazısı başlığı ve özeti üret (blogs). Her blog için id (1-6 sayı), title, summary (1-2 cümle), tags (1-2 etiket: Beslenme, Psikoloji, Egzersiz, Tıbbi, Bebek, Yaşam, İpucu), emoji üret.
-
-Lütfen SADECE aşağıdaki JSON formatında cevap ver, Markdown KULLANMA:
-{
-  "coachMessage": "Sevgili taze anne...",
-  "dailyTip": {
-    "title": "Tavsiye Başlığı",
-    "text": "Tavsiye detayı..."
-  },
-  "babyDev": "...",
-  "tips": "...",
-  "alertCard": {
-    "hasAlert": true,
-    "topic": "Semptom/Durum",
-    "title": "Uzman Görüşü Alın",
-    "description": "Açıklama"
-  },
-  "blogs": [
-    { "id": 1, "title": "...", "summary": "...", "tags": ["Bebek"], "emoji": "🍼" }
-  ]
-}
-`;
-        const result = await model.generateContent(prompt);
-        const text = result.response.text();
-        const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        const aiData = JSON.parse(cleanJson);
-        
-        setCoachMessage(aiData.coachMessage);
-        setDynamicInfo({ babyDev: aiData.babyDev, tips: aiData.tips });
-        setDailyTip({
-          title: aiData.dailyTip.title,
-          text: aiData.dailyTip.text,
-          icon: <Sparkles size={24} color="var(--color-primary)" />
-        });
-        if (aiData.alertCard && aiData.alertCard.hasAlert) {
-          setAlertCard(aiData.alertCard);
-        }
-        if (aiData.blogs && Array.isArray(aiData.blogs)) {
-          setBlogs(aiData.blogs);
-        }
-        
-        sessionStorage.setItem(cacheKey, JSON.stringify(aiData));
-        
-        setIsAILoading(false);
-        setTimeout(() => setShowPopup(true), 800);
-        
-      } catch (err) {
-        console.error("AI Error", err);
-        setCoachMessage("Bugün bebeğinizle birlikte sadece anın tadını çıkarın. Harika bir iş çıkarıyorsunuz.");
-        setDynamicInfo({ babyDev: "Bebeğiniz her gün yeni şeyler öğrenerek büyümeye devam ediyor.", tips: "Kendinize şefkat gösterin, dinlenmek en doğal ihtiyacınız." });
-        setDailyTip({
-           title: "Derin Bir Nefes Alın",
-           text: "Anneliğin ilk günleri zorlayıcı olabilir. Siz harika bir annesiniz, yardıma ihtiyaç duymak çok normal.",
-           icon: <Heart size={24} color="var(--color-primary)" />
-        });
-        setIsAILoading(false);
-        setTimeout(() => setShowPopup(true), 800);
-      }
+      setIsAILoading(true);
+      // Yapay Zeka servisi devre dışı olduğu için statik verilerle devam ediyoruz.
+      setCoachMessage("Bugün bebeğinizle birlikte sadece anın tadını çıkarın. Harika bir iş çıkarıyorsunuz.");
+      setDynamicInfo({ babyDev: "Bebeğiniz her gün yeni şeyler öğrenerek büyümeye devam ediyor.", tips: "Kendinize şefkat gösterin, dinlenmek en doğal ihtiyacınız." });
+      setDailyTip({
+         title: "Derin Bir Nefes Alın",
+         text: "Anneliğin ilk günleri zorlayıcı olabilir. Siz harika bir annesiniz, yardıma ihtiyaç duymak çok normal.",
+         icon: <Heart size={24} color="var(--color-primary)" />
+      });
+      // Fallback blogs
+      setBlogs([
+        { id: 1, title: 'Yenidoğan Uyku Düzeni', summary: 'Bebeğinizin uyku saatlerini nasıl düzene sokarsınız?', tags: ['Bebek', 'Uyku'], emoji: '😴' },
+        { id: 2, title: 'Emzirme Döneminde Beslenme', summary: 'Süt artırıcı besinler ve dikkat edilmesi gerekenler.', tags: ['Beslenme', 'Anne'], emoji: '🥛' },
+        { id: 3, title: 'Gaz Sancısına Ne İyi Gelir?', summary: 'Bebeklerde gaz problemleri ve masaj teknikleri.', tags: ['Bebek', 'Sağlık'], emoji: '💆' },
+        { id: 4, title: 'Lohusa Psikolojisi', summary: 'Doğum sonrası ruhsal değişimlerle başa çıkma yolları.', tags: ['Psikoloji', 'Anne'], emoji: '🌸' }
+      ]);
+      setIsAILoading(false);
+      setTimeout(() => setShowPopup(true), 800);
     };
 
     fetchAIInsights();
@@ -159,23 +82,11 @@ Lütfen SADECE aşağıdaki JSON formatında cevap ver, Markdown KULLANMA:
     setIsAssistantLoading(true);
     setAssistantMessage("");
     
-    try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-      
-      const prompt = `Sen uzman bir bebek gelişimi ve pediatri asistanısın. Kullanıcı yeni doğum yaptı. Bebeği ${babyAgeDays} günlük.
-      Kullanıcının profili: ${JSON.stringify(profile)}
-      Odaklanmak istediği konu: "${topic}".
-      Lütfen bu konu hakkında yeni anneye çok sempatik, rahatlatıcı, şefkatli ve KISA bir açıklama yap. Bebek bakımı veya lohusalıkla ilgili bilimsel verileri sıkıcı olmayan, bol emojili ve sıcak bir sohbet havasında anlat. Annenin uykusuz ve yorgun olabileceğini unutma; bu yüzden çok uzun paragraflardan kaçın, moral ver ve tavsiyeleri kısa "hap bilgiler" şeklinde ver. Cevabını Markdown formatında (kalın başlıklar, kısa maddeler vb.) çok şık ve okuması kolay olacak şekilde biçimlendir.`;
-      
-      const result = await model.generateContent(prompt);
-      setAssistantMessage(result.response.text());
+    // Yapay Zeka servisi devre dışı.
+    setTimeout(() => {
+      setAssistantMessage(`**${topic}** konusunda doktorunuza danışmanız daha sağlıklı olacaktır.\n\n_Yapay zeka asistanımız bakım aşamasındadır._`);
       setIsAssistantLoading(false);
-    } catch(err) {
-      setAssistantMessage("Şu anda sisteme bağlanamıyorum, lütfen daha sonra tekrar deneyin.");
-      setIsAssistantLoading(false);
-    }
+    }, 1000);
   };
 
   const getDaysUntilAppointment = () => {

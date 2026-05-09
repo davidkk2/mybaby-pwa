@@ -5,7 +5,7 @@ import { LogOut, Heart, Sparkles, Activity, Scale, MessageCircleHeart, Info, Ste
 import { getWeeklyData, type WeeklyData } from '../data/weeklyData';
 import Navigation from '../components/Navigation';
 import BlogSection, { type BlogEntry } from '../components/BlogSection';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import BabyNamesTool from '../components/BabyNamesTool';
 import ReactMarkdown from 'react-markdown';
 import TTCDashboard from './TTCDashboard';
 import BornDashboard from './BornDashboard';
@@ -14,10 +14,8 @@ import WeekTimeline from '../components/WeekTimeline';
 export default function Dashboard() {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
-  const [babyMessage, setBabyMessage] = useState("Annecim sana ulaşmaya çalışıyorum...");
   const [dailyTip, setDailyTip] = useState({ title: "Asistanınız Düşünüyor...", text: "Doktor notlarınız ve verileriniz yapay zeka tarafından analiz ediliyor...", icon: <Sparkles size={24} color="var(--color-primary)"/> });
   const [dynamicInfo, setDynamicInfo] = useState({ babyDev: "Yükleniyor...", momSymp: "Yükleniyor..." });
-  const [showPopup, setShowPopup] = useState(false);
   const [weekInfo, setWeekInfo] = useState<WeeklyData | null>(null);
   const [selectedWeek, setSelectedWeek] = useState<number | null>(null);
   const [currentVisit, setCurrentVisit] = useState<any>(null);
@@ -65,132 +63,33 @@ export default function Dashboard() {
       }
 
       const fetchAIInsights = async () => {
-        try {
-          // Check daily cache first
-          const cacheKey = `mybaby_ai_cache_${currentSelectedWeek}_${parsed.primaryGoal}_${parsed.weight}_${parsed.age}_${parsed.height}_${parsed.prePregnancyWeight}_${parsed.isWorking}_${parsed.workStart}_${parsed.workEnd}_${parsed.nextAppointmentDate || 'no'}_${new Date().toDateString()}`;
-          const cached = sessionStorage.getItem(cacheKey);
-          
-          if (cached === 'loading') {
-            return; // Prevent parallel concurrent API calls in StrictMode
-          }
+        setIsAILoading(true);
+        // Yapay Zeka iptal edildi, statik veriye dönüyoruz.
+        const currentWeekData = getWeeklyData(currentSelectedWeek);
+        setDynamicInfo({ babyDev: currentWeekData.babyDevelopment, momSymp: currentWeekData.momSymptoms });
+        setDailyTip({
+           title: "Dinlenmeyi Unutmayın",
+           text: "Gün içinde fırsat buldukça ayaklarınızı uzatarak dinlenmeniz bebeğiniz ve sizin için çok önemli.",
+           icon: <Heart size={24} color="var(--color-primary)" />
+        });
+        
+        // Static Checklist
+        setChecklist([
+          { id: 1, title: "Su Tüketimini Artır", description: "Günde en az 2.5 litre su içmeye özen göster." },
+          { id: 2, title: "Hafif Egzersiz", description: "Kendini yormadan 20 dakikalık yürüyüşler yap." },
+          { id: 3, title: "Doktor Kontrolü", description: "Randevularını ve testlerini zamanında planla." }
+        ]);
 
-          if (cached && cached !== 'loading') {
-            const aiData = JSON.parse(cached);
-            setBabyMessage(aiData.babyMessage);
-            setDynamicInfo({ babyDev: aiData.babyDev, momSymp: aiData.momSymp });
-            setDailyTip({ title: aiData.dailyTip.title, text: aiData.dailyTip.text, icon: <Sparkles size={24} color="var(--color-primary)" /> });
-            if (aiData.alertCard && aiData.alertCard.hasAlert) setAlertCard(aiData.alertCard);
-            if (aiData.checklist) setChecklist(aiData.checklist);
-            if (aiData.blogs && Array.isArray(aiData.blogs)) setBlogs(aiData.blogs);
-            setIsAILoading(false);
-            if (currentSelectedWeek === parsed.weeks) {
-              setTimeout(() => setShowPopup(true), 800);
-            }
-            return;
-          }
-
-          // Mark as loading to prevent duplicate simultaneous fetches
-          sessionStorage.setItem(cacheKey, 'loading');
-
-          const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-          const genAI = new GoogleGenerativeAI(apiKey);
-          const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-          
-          const currentWeekData = getWeeklyData(currentSelectedWeek);
-
-          const prompt = `Sen çok tatlı, sevecen, empatik ve uzman bir hamilelik asistanı yapay zekasın. 
-Kullanıcının genel profil bilgileri: ${JSON.stringify(parsed)} (Kullanıcı normalde ${parsed.weeks}. haftada).
-Kullanıcı şu an sistemden ${currentSelectedWeek}. haftanın bilgilerini inceliyor! Tavsiyelerini ve bebek gelişimini ${currentSelectedWeek}. haftaya göre ver.
-Kullanıcının doktor muayene notları: ${JSON.stringify(visits)}
-Bu incelenen (${currentSelectedWeek}.) haftanın genel tıbbi bilgileri: Bebek gelişimi: "${currentWeekData.babyDevelopment}". Anne belirtileri: "${currentWeekData.momSymptoms}".
-
-DİKKAT! KULLANICININ UYGULAMADAKİ ANA HEDEFİ ŞUDUR: "${parsed.primaryGoal === 'mom_focus' ? 'Kendi vücudundaki değişimleri ve belirtileri öncelikli olarak takip etmek.' : parsed.primaryGoal === 'medical_focus' ? 'Olası komplikasyonları, tıbbi süreci ve ilaçları çok ciddiye almak ve tıbbi odaklı kalmak.' : 'Bebeğin gelişimini yakından takip etmek ve heyecanını paylaşmak.'}". 
-
-Görev 1: Bebeğin ağzından, anneyi çok mutlu edecek aşırı kısa ve tatlı bir mesaj yaz (babyMessage). Ana hedefe göre tonu ayarla.
-Görev 2: Kullanıcının YAŞINA ve profiline uygun GÜNLÜK TAVSİYE ver (dailyTip). Kesinlikle blog yazısı gibi uzun olmasın, KISA ve samimi olsun (maksimum 2 cümle).
-Görev 3: Bebek Gelişimi metnini kişiye özel yeniden yaz (babyDev). Profesyonel ve sıcak bir hamilelik uygulaması tarzında, bebeğin şu anki boyutunu (Örn: mercimek tanesi) ve çok ilginç 1-2 bilimsel gerçeğini ekle. Ancak KESİNLİKLE kısa, okuması eğlenceli ve hap bilgi şeklinde olsun (maksimum 3 cümle). Markdown ile **kalın yazılar** kullan.
-Görev 4: Anne Belirtileri metnini ona özel hale getirerek yeniden yaz (momSymp). Çok KISA, motive edici ve sohbet havasında olsun (maksimum 3 cümle). Markdown kullan.
-Görev 5: Kullanıcının doktor notlarında, seçtiği ana hedefte veya bu haftanın genel belirtilerinde anne için dikkat edilmesi gereken bir durum var mı? Varsa, "Kontrol Zamanı" isimli bir kart için veriler üret. Yoksa "hasAlert": false döndür.
-Görev 6: Kullanıcının şu anki hamilelik haftasına uygun 6 adet kişiye özel blog yazısı başlığı ve özeti üret (blogs). 
-Görev 7: Bu haftanın gelişim özelliklerine ve kullanıcının profiline göre **3 maddelik kişiye özel bir yapılacaklar listesi** (checklist) hazırla. Örn: "Su Tüketimini Artır", "Folik Asit Kullanımı", "Egzersize Başla". Her maddenin 'id' (1,2,3), 'title' (kısa) ve 'description' (1 cümle) alanları olsun.
-
-Lütfen SADECE aşağıdaki JSON formatında cevap ver, Markdown KULLANMA:
-{
-  "babyMessage": "Annecim...",
-  "dailyTip": {
-    "title": "Tavsiye Başlığı",
-    "text": "Tavsiye detayı..."
-  },
-  "babyDev": "...",
-  "momSymp": "...",
-  "alertCard": {
-    "hasAlert": true,
-    "topic": "Semptom/Durum Adı",
-    "title": "Bu Semptom Hakkında Konuşalım",
-    "description": "Kısa bir açıklama cümlesi..."
-  },
-  "checklist": [
-    { "id": 1, "title": "...", "description": "..." }
-  ],
-  "blogs": [
-    { "id": 1, "title": "...", "summary": "...", "tags": ["Beslenme"], "emoji": "🥦" }
-  ]
-}
-`;
-          const result = await model.generateContent(prompt);
-          const text = result.response.text();
-          const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
-          const aiData = JSON.parse(cleanJson);
-          
-          setBabyMessage(aiData.babyMessage);
-          setDynamicInfo({ babyDev: aiData.babyDev, momSymp: aiData.momSymp });
-          setDailyTip({
-            title: aiData.dailyTip.title,
-            text: aiData.dailyTip.text,
-            icon: <Sparkles size={24} color="var(--color-primary)" />
-          });
-          if (aiData.alertCard && aiData.alertCard.hasAlert) {
-            setAlertCard(aiData.alertCard);
-          }
-          if (aiData.blogs && Array.isArray(aiData.blogs)) {
-            setBlogs(aiData.blogs);
-          }
-          if (aiData.checklist) {
-            setChecklist(aiData.checklist);
-          }
-
-          // Cache for today
-          try { sessionStorage.setItem(`mybaby_ai_cache_${currentSelectedWeek}_${parsed.primaryGoal}_${parsed.weight}_${parsed.age}_${parsed.height}_${parsed.prePregnancyWeight}_${parsed.isWorking}_${parsed.workStart}_${parsed.workEnd}_${parsed.nextAppointmentDate || 'no'}_${new Date().toDateString()}`, JSON.stringify(aiData)); } catch(e) {}
-          
-          setIsAILoading(false);
-          if (currentSelectedWeek === parsed.weeks) {
-            setTimeout(() => setShowPopup(true), 800);
-          }
-          
-        } catch (err) {
-          console.error("AI Error", err);
-          sessionStorage.removeItem(`mybaby_ai_cache_${currentSelectedWeek}_${parsed.primaryGoal}_${parsed.weight}_${parsed.age}_${parsed.height}_${parsed.prePregnancyWeight}_${parsed.isWorking}_${parsed.workStart}_${parsed.workEnd}_${parsed.nextAppointmentDate || 'no'}_${new Date().toDateString()}`);
-          
-          setBabyMessage("Ben buradayım annecim, seninle büyümeye devam ediyorum!");
-          const currentWeekData = getWeeklyData(parsed.weeks);
-          setDynamicInfo({ babyDev: currentWeekData.babyDevelopment, momSymp: currentWeekData.momSymptoms });
-          setDailyTip({
-             title: "Dinlenmeyi Unutmayın",
-             text: "Gün içinde fırsat buldukça ayaklarınızı uzatarak dinlenmeniz bebeğiniz ve sizin için çok önemli.",
-             icon: <Heart size={24} color="var(--color-primary)" />
-          });
-          // Fallback blogs when AI fails
-          setBlogs([
-            { id: 1, title: `${parsed.weeks}. Haftada Bebeğinizde Neler Oluyor?`, summary: 'Bu haftanın gelişim aşamalarını öğrenin.', tags: ['Bebek', 'Tıbbi'], emoji: '👶' },
-            { id: 2, title: 'Hamilelikte Sağlıklı Beslenme Rehberi', summary: 'Bu dönemde almanız gereken besinler ve vitaminler.', tags: ['Beslenme', 'İpucu'], emoji: '🥗' },
-            { id: 3, title: 'Hamilelikte Egzersiz: Neler Yapabilirsiniz?', summary: 'Güvenli egzersiz önerileri ve dikkat edilmesi gerekenler.', tags: ['Egzersiz', 'Yaşam'], emoji: '🧘' },
-            { id: 4, title: 'Hamilelikte Ruh Sağlığınızı Korumak', summary: 'Hormonal değişimlerle başa çıkma yolları.', tags: ['Psikoloji', 'Yaşam'], emoji: '💆' },
-            { id: 5, title: 'Doktor Kontrollerinde Sormanız Gerekenler', summary: 'Muayenelerde unutmamanız gereken önemli sorular.', tags: ['Tıbbi', 'İpucu'], emoji: '📋' },
-            { id: 6, title: 'Hamilelikte Uyku Düzeni ve İpuçları', summary: 'Rahat uyku için pozisyon ve rutinler.', tags: ['Yaşam', 'İpucu'], emoji: '😴' },
-          ]);
-          setIsAILoading(false);
-          setTimeout(() => setShowPopup(true), 800);
-        }
+        // Fallback blogs
+        setBlogs([
+          { id: 1, title: `${currentSelectedWeek}. Haftada Bebeğinizde Neler Oluyor?`, summary: 'Bu haftanın gelişim aşamalarını öğrenin.', tags: ['Bebek', 'Tıbbi'], emoji: '👶' },
+          { id: 2, title: 'Hamilelikte Sağlıklı Beslenme Rehberi', summary: 'Bu dönemde almanız gereken besinler ve vitaminler.', tags: ['Beslenme', 'İpucu'], emoji: '🥗' },
+          { id: 3, title: 'Hamilelikte Egzersiz: Neler Yapabilirsiniz?', summary: 'Güvenli egzersiz önerileri ve dikkat edilmesi gerekenler.', tags: ['Egzersiz', 'Yaşam'], emoji: '🧘' },
+          { id: 4, title: 'Hamilelikte Ruh Sağlığınızı Korumak', summary: 'Hormonal değişimlerle başa çıkma yolları.', tags: ['Psikoloji', 'Yaşam'], emoji: '💆' },
+          { id: 5, title: 'Doktor Kontrollerinde Sormanız Gerekenler', summary: 'Muayenelerde unutmamanız gereken önemli sorular.', tags: ['Tıbbi', 'İpucu'], emoji: '📋' },
+          { id: 6, title: 'Hamilelikte Uyku Düzeni ve İpuçları', summary: 'Rahat uyku için pozisyon ve rutinler.', tags: ['Yaşam', 'İpucu'], emoji: '😴' },
+        ]);
+        setIsAILoading(false);
       };
 
       setIsAILoading(true);
@@ -208,23 +107,11 @@ Lütfen SADECE aşağıdaki JSON formatında cevap ver, Markdown KULLANMA:
     setIsAssistantLoading(true);
     setAssistantMessage("");
     
-    try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-      
-      const prompt = `Sen uzman bir hamilelik asistanısın. Kullanıcı şu anda ${profile.weeks} haftalık hamile. 
-      Kullanıcının profili: ${JSON.stringify(profile)}
-      Kullanıcının odaklanmak istediği konu (Semptom/Durum): "${topic}".
-      Lütfen bu durum/semptom hakkında kullanıcıya çok sempatik, samimi, şefkatli ve KISA bir açıklama yap. Bilimsel verileri çok sıkıcı olmayan, bol emojili ve sıcak bir sohbet havasında anlat. Heyecanlı ve yorgun bir anne adayının okuyacağını unutma; bu yüzden uzun paragraflardan kaçın, rahatlatıcı ol ve tavsiyeleri kısa "hap bilgiler" şeklinde ver. Sonuna da "Ne zaman doktora başvurmalı?" kısmını ekle. Cevabını Markdown formatında (kalın başlıklar, kısa maddeler vb.) çok şık ve okuması kolay olacak şekilde biçimlendir.`;
-      
-      const result = await model.generateContent(prompt);
-      setAssistantMessage(result.response.text());
+    // Yapay Zeka servisi devre dışı olduğu için statik bir mesaj gösteriyoruz.
+    setTimeout(() => {
+      setAssistantMessage(`**${topic}** hakkında şu an doktorunuza danışmanız en doğrusu olacaktır. Herhangi bir sağlık durumunda öncelikle doktorunuzla iletişime geçmeyi unutmayın.\n\n_Not: Yapay Zeka asistanımız bakım aşamasındadır._`);
       setIsAssistantLoading(false);
-    } catch(err) {
-      setAssistantMessage("Şu anda sisteme bağlanamıyorum, lütfen daha sonra tekrar deneyin.");
-      setIsAssistantLoading(false);
-    }
+    }, 1000);
   };
 
   const handleReset = () => {
@@ -309,58 +196,6 @@ Lütfen SADECE aşağıdaki JSON formatında cevap ver, Markdown KULLANMA:
   return (
     <>
       <AnimatePresence>
-        {showPopup && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            style={{
-              position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
-              backgroundColor: 'rgba(255, 251, 245, 0.7)',
-              backdropFilter: 'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)',
-              zIndex: 9999,
-              display: 'flex', justifyContent: 'center', alignItems: 'center',
-              padding: '1.5rem'
-            }}
-          >
-            <motion.div
-              initial={{ scale: 0.5, y: 100, opacity: 0 }}
-              animate={{ scale: 1, y: 0, opacity: 1 }}
-              exit={{ scale: 0.8, y: 20, opacity: 0 }}
-              transition={{ type: "spring", bounce: 0.5, duration: 0.8 }}
-              className="glass-card"
-              style={{
-                maxWidth: '350px', width: '100%', padding: '2rem 1.5rem',
-                border: '3px solid var(--color-primary)', textAlign: 'center',
-                position: 'relative', boxShadow: '0 25px 50px rgba(255, 196, 164, 0.3)'
-              }}
-            >
-              <motion.div 
-                animate={{ rotate: [0, -10, 10, -10, 0] }}
-                transition={{ repeat: Infinity, duration: 2, repeatDelay: 1 }}
-                style={{
-                  position: 'absolute', top: '-30px', left: '50%', transform: 'translateX(-50%)',
-                  width: '60px', height: '60px', borderRadius: '50%',
-                  backgroundColor: 'var(--color-primary)', color: 'white',
-                  display: 'flex', justifyContent: 'center', alignItems: 'center',
-                  boxShadow: 'var(--shadow-md)'
-                }}
-              >
-                <MessageCircleHeart size={30} />
-              </motion.div>
-
-              <h2 style={{ marginTop: '1rem', color: 'var(--color-primary)', fontSize: '1.3rem' }}>Sana bir mesajım var!</h2>
-              <p style={{ fontSize: '1.1rem', fontStyle: 'italic', margin: '1rem 0', color: 'var(--color-text-main)' }}>
-                "{babyMessage}"
-              </p>
-
-              <button className="btn-primary" onClick={() => setShowPopup(false)} style={{ width: '100%', padding: '0.8rem', fontSize: '1rem' }}>
-                Canım Bebeğim <Heart size={16} fill="white" />
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
 
         {showAssistantModal && (
           <motion.div 
@@ -689,6 +524,9 @@ Lütfen SADECE aşağıdaki JSON formatında cevap ver, Markdown KULLANMA:
                   </div>
                 </div>
               </div>
+
+              {/* Baby Names Tool */}
+              <BabyNamesTool />
 
               {/* Personalized Blog Section */}
               <BlogSection blogs={blogs} profile={profile} isLoading={isAILoading} />

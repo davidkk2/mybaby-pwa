@@ -63,99 +63,24 @@ export default function TTCDashboard({ profile, onReset }: { profile: any, onRes
 
   useEffect(() => {
     const fetchAIInsights = async () => {
-      try {
-        // Check cache first
-        const cacheKey = `ttc_ai_cache_${cycleDay}_${profile.weight}_${profile.age}_${profile.height}_${profile.isWorking}_${profile.workStart}_${profile.workEnd}_${profile.tryDuration}_${new Date().toDateString()}`;
-        const cached = sessionStorage.getItem(cacheKey);
-        
-        if (cached) {
-          const aiData = JSON.parse(cached);
-          setCoachMessage(aiData.coachMessage);
-          setDynamicInfo({ bodyDev: aiData.bodyDev, tips: aiData.tips });
-          setDailyTip({
-            title: aiData.dailyTip.title,
-            text: aiData.dailyTip.text,
-            icon: <Sparkles size={24} color="var(--color-primary)" />
-          });
-          if (aiData.alertCard && aiData.alertCard.hasAlert) setAlertCard(aiData.alertCard);
-          if (aiData.blogs && Array.isArray(aiData.blogs)) setBlogs(aiData.blogs);
-          
-          setIsAILoading(false);
-          setTimeout(() => setShowPopup(true), 800);
-          return;
-        }
-
-        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
-        const prompt = `Sen uzman, şefkatli ve destekleyici bir "Doğurganlık ve Gebe Kalma (TTC) Koçusun".
-Kullanıcının profili: Yaş: ${profile.age}, Kilo: ${profile.weight}, Boy: ${profile.height}, Ne zamandır deniyor: "${profile.tryDuration}". Çalışma Durumu: ${profile.isWorking ? `Çalışıyor (Mesai saatleri: ${profile.workStart} - ${profile.workEnd})` : 'Çalışmıyor'}.
-Durum: Adet döngüsünün ${cycleDay}. gününde. Döngü uzunluğu ${cycleLength} gün. Şu anki evre: "${phase}".
-
-Görev 1: Kullanıcıya bu sabah okuyacağı, moral verici, şefkatli ve profesyonel bir koç mesajı yaz (coachMessage). Umut verici olsun.
-Görev 2: Kullanıcının bulunduğu evreye (${phase}) ve deneme süresine uygun güncel bir tavsiye ver (dailyTip). (Beslenme, stres, ilişki zamanlaması vs.)
-Görev 3: Kullanıcının vücudunda şu an bilimsel olarak neler olduğunu detaylı ama anlaşılır dille anlat (bodyDev).
-Görev 4: Gebe kalma şansını artırmak için bu hafta yapması gerekenler hakkında liste şeklinde değil, akıcı bir metinle tavsiyeler ver (tips).
-Görev 5: Kullanıcının profilinde doktor notları varsa veya belirttiği "deneme süresi" riskliyse (örn 1 yıldan fazla), doktora danışması gereken bir konu var mı kontrol et. Varsa "Kontrol Zamanı" kartı oluştur. Yoksa false döndür.
-Görev 6: Kullanıcının şu anki döngü gününe, profiline ve doğurganlık evresine uygun 6 adet kişiye özel blog yazısı başlığı ve özeti üret (blogs). Her blog için id (1-6 sayı), title, summary (1-2 cümle), tags (1-2 etiket: Doğurganlık, Beslenme, Psikoloji, Egzersiz, Tıbbi, Yaşam, İpucu), emoji üret. Yazılar birbirinden farklı konularda olmalı ve kullanıcının şu anki evresine uygun olmalı.
-
-Lütfen SADECE aşağıdaki JSON formatında cevap ver, Markdown KULLANMA:
-{
-  "coachMessage": "Canım anne adayı...",
-  "dailyTip": {
-    "title": "Tavsiye Başlığı",
-    "text": "Tavsiye detayı..."
-  },
-  "bodyDev": "...",
-  "tips": "...",
-  "alertCard": {
-    "hasAlert": true,
-    "topic": "Semptom/Durum",
-    "title": "Uzman Görüşü Alın",
-    "description": "Açıklama"
-  },
-  "blogs": [
-    { "id": 1, "title": "...", "summary": "...", "tags": ["Doğurganlık"], "emoji": "🌸" }
-  ]
-}
-`;
-        const result = await model.generateContent(prompt);
-        const text = result.response.text();
-        const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        const aiData = JSON.parse(cleanJson);
-        
-        setCoachMessage(aiData.coachMessage);
-        setDynamicInfo({ bodyDev: aiData.bodyDev, tips: aiData.tips });
-        setDailyTip({
-          title: aiData.dailyTip.title,
-          text: aiData.dailyTip.text,
-          icon: <Sparkles size={24} color="var(--color-primary)" />
-        });
-        if (aiData.alertCard && aiData.alertCard.hasAlert) {
-          setAlertCard(aiData.alertCard);
-        }
-        if (aiData.blogs && Array.isArray(aiData.blogs)) {
-          setBlogs(aiData.blogs);
-        }
-        
-        sessionStorage.setItem(cacheKey, JSON.stringify(aiData));
-        
-        setIsAILoading(false);
-        setTimeout(() => setShowPopup(true), 800);
-        
-      } catch (err) {
-        console.error("AI Error", err);
-        setCoachMessage("Bugün stres yapmadan kendine vakit ayırmayı unutma. Her şey yolunda gidecek.");
-        setDynamicInfo({ bodyDev: "Döngünüz devam ediyor.", tips: "Sağlıklı beslenin ve stresten uzak durun." });
-        setDailyTip({
-           title: "Rahatlayın",
-           text: "Stres doğurganlığı etkiler. Bugün kendinize özel bir an yaratın.",
-           icon: <Heart size={24} color="var(--color-primary)" />
-        });
-        setIsAILoading(false);
-        setTimeout(() => setShowPopup(true), 800);
-      }
+      setIsAILoading(true);
+      // AI servisi devre dışı olduğu için statik verilerle devam ediyoruz.
+      setCoachMessage("Bugün stres yapmadan kendine vakit ayırmayı unutma. Her şey yolunda gidecek.");
+      setDynamicInfo({ bodyDev: "Döngünüz sağlıklı bir şekilde ilerliyor. Bu süreci pozitif kalarak geçirin.", tips: "Sağlıklı beslenmeye özen gösterin, bol su için ve stresten uzak durun." });
+      setDailyTip({
+         title: "Rahatlayın",
+         text: "Stres doğurganlığı etkileyebilir. Bugün kendinize özel bir an yaratın.",
+         icon: <Heart size={24} color="var(--color-primary)" />
+      });
+      // Fallback blogs
+      setBlogs([
+        { id: 1, title: 'Doğurganlığı Artıran Besinler', summary: 'Gebe kalma şansınızı artıran yiyecekler.', tags: ['Beslenme', 'Doğurganlık'], emoji: '🥑' },
+        { id: 2, title: 'Stres Yönetimi ve Hamile Kalma', summary: 'Stresin vücudunuza etkisi ve rahatlama yolları.', tags: ['Psikoloji', 'Yaşam'], emoji: '🧘' },
+        { id: 3, title: 'Yumurtlama Dönemi Nasıl Hesaplanır?', summary: 'En verimli günlerinizi tespit etmenin yolları.', tags: ['Tıbbi', 'İpucu'], emoji: '📅' },
+        { id: 4, title: 'Sağlıklı Bir Gebelik İçin Egzersiz', summary: 'Deneme sürecinde hangi egzersizler faydalı?', tags: ['Egzersiz', 'Yaşam'], emoji: '🏃‍♀️' }
+      ]);
+      setIsAILoading(false);
+      setTimeout(() => setShowPopup(true), 800);
     };
 
     fetchAIInsights();
@@ -166,23 +91,11 @@ Lütfen SADECE aşağıdaki JSON formatında cevap ver, Markdown KULLANMA:
     setIsAssistantLoading(true);
     setAssistantMessage("");
     
-    try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-      
-      const prompt = `Sen uzman bir doğurganlık asistanısın. Kullanıcı hamile kalmaya çalışıyor.
-      Kullanıcının profili: ${JSON.stringify(profile)}
-      Odaklanmak istediği konu: "${topic}".
-      Lütfen bu konu hakkında kullanıcıya çok sempatik, umut verici, şefkatli ve KISA bir açıklama yap. Bilimsel verileri sıkıcı olmayan, bol emojili ve sıcak bir sohbet havasında anlat. Bu sürecin stresli olabileceğini unutma, ona moral ver. Uzun paragraflardan kaçın, tavsiyeleri kısa "hap bilgiler" şeklinde ver. Cevabını Markdown formatında (kalın başlıklar, kısa maddeler vb.) çok şık ve okuması kolay olacak şekilde biçimlendir.`;
-      
-      const result = await model.generateContent(prompt);
-      setAssistantMessage(result.response.text());
+    // Yapay Zeka servisi devre dışı.
+    setTimeout(() => {
+      setAssistantMessage(`**${topic}** konusunda doktorunuza danışmanız daha sağlıklı olacaktır.\n\n_Yapay zeka asistanımız bakım aşamasındadır._`);
       setIsAssistantLoading(false);
-    } catch(err) {
-      setAssistantMessage("Şu anda sisteme bağlanamıyorum, lütfen daha sonra tekrar deneyin.");
-      setIsAssistantLoading(false);
-    }
+    }, 1000);
   };
 
   const getDaysUntilAppointment = () => {
