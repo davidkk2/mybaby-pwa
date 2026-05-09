@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Heart, Sparkles, Activity, Scale, MessageCircleHeart, Info, Stethoscope, X, CheckCircle2, Circle, ListTodo } from 'lucide-react';
 import { getWeeklyData, type WeeklyData } from '../data/weeklyData';
+import { weeklyDetailsData } from '../data/weeklyDetailsData';
 import Navigation from '../components/Navigation';
 import BlogSection, { type BlogEntry } from '../components/BlogSection';
 import BabyNamesTool from '../components/BabyNamesTool';
@@ -64,9 +65,13 @@ export default function Dashboard() {
 
       const fetchAIInsights = async () => {
         setIsAILoading(true);
-        // Yapay Zeka iptal edildi, statik veriye dönüyoruz.
+        const detailedData = weeklyDetailsData[currentSelectedWeek] || {};
         const currentWeekData = getWeeklyData(currentSelectedWeek);
-        setDynamicInfo({ babyDev: currentWeekData.babyDevelopment, momSymp: currentWeekData.momSymptoms });
+        
+        setDynamicInfo({ 
+          babyDev: detailedData.babyDev || currentWeekData.babyDevelopment, 
+          momSymp: detailedData.momBody || currentWeekData.momSymptoms 
+        });
         setDailyTip({
            title: "Dinlenmeyi Unutmayın",
            text: "Gün içinde fırsat buldukça ayaklarınızı uzatarak dinlenmeniz bebeğiniz ve sizin için çok önemli.",
