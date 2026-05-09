@@ -401,7 +401,7 @@ export default function Dashboard() {
               <div style={{ marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '1.8rem' }}>
                 {profile?.primaryGoal === 'mom_focus' || profile?.primaryGoal === 'medical_focus' ? (
                   <>
-                    <div style={{ order: 1, width: '100%' }}>
+                    <div style={{ order: 1, width: '100%', background: 'white', padding: '1.5rem', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.03)' }}>
                       <h4 style={{ margin: '0 0 0.6rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem', color: profile?.primaryGoal === 'medical_focus' ? '#e74c3c' : 'var(--color-secondary)', fontSize: '1.2rem', fontWeight: '700' }}>
                         <Info size={20} /> Sizde Neler Oluyor?
                       </h4>
@@ -409,7 +409,7 @@ export default function Dashboard() {
                         {isAILoading ? 'Yapay Zeka Analiz Ediyor...' : <ReactMarkdown>{dynamicInfo.momSymp}</ReactMarkdown>}
                       </div>
                     </div>
-                    <div style={{ order: 2, width: '100%' }}>
+                    <div style={{ order: 2, width: '100%', background: 'white', padding: '1.5rem', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.03)' }}>
                       <h4 style={{ margin: '0 0 0.6rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-primary)', fontSize: '1.2rem', fontWeight: '700' }}>
                         <Sparkles size={20} /> Bebekte Neler Oluyor?
                       </h4>
@@ -420,7 +420,7 @@ export default function Dashboard() {
                   </>
                 ) : (
                   <>
-                    <div style={{ order: 1, width: '100%' }}>
+                    <div style={{ order: 1, width: '100%', background: 'white', padding: '1.5rem', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.03)' }}>
                       <h4 style={{ margin: '0 0 0.6rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-primary)', fontSize: '1.2rem', fontWeight: '700' }}>
                         <Sparkles size={20} /> Bebekte Neler Oluyor?
                       </h4>
@@ -428,7 +428,7 @@ export default function Dashboard() {
                         {isAILoading ? 'Yapay Zeka Analiz Ediyor...' : <ReactMarkdown>{dynamicInfo.babyDev}</ReactMarkdown>}
                       </div>
                     </div>
-                    <div style={{ order: 2, width: '100%' }}>
+                    <div style={{ order: 2, width: '100%', background: 'white', padding: '1.5rem', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.03)' }}>
                       <h4 style={{ margin: '0 0 0.6rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-secondary)', fontSize: '1.2rem', fontWeight: '700' }}>
                         <Info size={20} /> Sizde Neler Oluyor?
                       </h4>
