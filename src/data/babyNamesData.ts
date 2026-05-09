@@ -956,6 +956,7 @@ export const babyNames: BabyName[] = [
   { id: 'k431', name: 'Zuhal', gender: 'girl', origin: 'Arapça', meaning: 'Satürn gezegeni; uzak ve gizemli.' },
   { id: 'k432', name: 'Zülal', gender: 'girl', origin: 'Arapça', meaning: 'Saf, berrak, temiz su.' },
   { id: 'k433', name: 'Zümra', gender: 'girl', origin: 'Türkçe', meaning: 'Zümrüt gibi yeşil ve değerli.' },
+  { id: 'k434', name: 'Talya', gender: 'girl', origin: 'Yunanca/İbranice', meaning: 'Doğanın uyanışı, baharın müjdesi. (Ayrıca: Sabah çiyi)', isPopular: true },
 ];
 
 // Toplam: 512 erkek + 433 kız = 945 isim
