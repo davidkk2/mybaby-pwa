@@ -64,14 +64,40 @@ export default function TTCDashboard({ profile, onReset }: { profile: any, onRes
   useEffect(() => {
     const fetchAIInsights = async () => {
       setIsAILoading(true);
-      // AI servisi devre dışı olduğu için statik verilerle devam ediyoruz.
-      setCoachMessage("Bugün stres yapmadan kendine vakit ayırmayı unutma. Her şey yolunda gidecek.");
-      setDynamicInfo({ bodyDev: "Döngünüz sağlıklı bir şekilde ilerliyor. Bu süreci pozitif kalarak geçirin.", tips: "Sağlıklı beslenmeye özen gösterin, bol su için ve stresten uzak durun." });
-      setDailyTip({
+      // AI servisi devre dışı olduğu için senaryoya göre statik verilerle devam ediyoruz.
+      let bodyDevText = "Döngünüz sağlıklı bir şekilde ilerliyor. Bu süreci pozitif kalarak geçirin.";
+      let tipsText = "Sağlıklı beslenmeye özen gösterin, bol su için ve stresten uzak durun.";
+      let tipMessage = {
          title: "Rahatlayın",
          text: "Stres doğurganlığı etkileyebilir. Bugün kendinize özel bir an yaratın.",
          icon: <Heart size={24} color="var(--color-primary)" />
-      });
+      };
+
+      if (phase.includes("Adet")) {
+        bodyDevText = "**Adet Dönemindesiniz:**\nVücudunuz yeni bir döngüye hazırlanmak için rahim iç tabakasını yeniliyor. Hormon seviyeleriniz en düşük seviyede olduğu için biraz yorgun hissetmeniz çok normal.";
+        tipsText = "Kendinize nazik davranın. Sıcak su torbası, rahatlatıcı bitki çayları (papatya, rezene) ve hafif yürüyüşler kramplarınıza iyi gelebilir.";
+        tipMessage.title = "Dinlenme Zamanı";
+        tipMessage.text = "Bugün ağır egzersizlerden kaçının ve vücudunuzun yenilenmesine izin verin.";
+      } else if (phase.includes("Gelişim")) {
+        bodyDevText = "**Foliküler Faz (Gelişim Dönemi):**\nÖstrojen seviyeniz yükselişe geçti! Enerjiniz artıyor ve yumurtalıklarınızdaki foliküller olgunlaşmaya başlıyor. Vücudunuz döllenme ihtimali için hazırlık yapıyor.";
+        tipsText = "Yüksek enerjinizi değerlendirin! Egzersiz rutininize ağırlık verebilir, bol yeşillik ve protein ağırlıklı beslenerek yumurta kalitenizi artırabilirsiniz.";
+        tipMessage.title = "Enerji Zirvede!";
+        tipMessage.text = "Artan östrojen sayesinde harika hissediyorsunuz. Bugün eşinizle keyifli bir yürüyüşe çıkın.";
+      } else if (phase.includes("Yumurtlama") || phase.includes("Yüksek")) {
+        bodyDevText = "**Ovülasyon (Yumurtlama) Dönemi:**\nŞu an doğurganlığınızın zirvesindesiniz! Olgunlaşan yumurta serbest kalmak üzere veya kaldı. Hamile kalma ihtimalinizin en yüksek olduğu 24-48 saatlik altın penceredesiniz.";
+        tipsText = "Bu dönemi stres yapmadan, doğal akışında değerlendirmeye çalışın. Kaygan ve uzayan servikal akıntı en önemli fiziksel belirtinizdir.";
+        tipMessage.title = "Altın Pencere!";
+        tipMessage.text = "Bebek denemeleri için en doğru zamandasınız. Stresi bir kenara bırakın ve anın tadını çıkarın.";
+      } else if (phase.includes("Luteal")) {
+        bodyDevText = "**Luteal Faz (Bekleme Dönemi):**\nProgesteron hormonunuz devrede. Eğer döllenme gerçekleştiyse, embriyo rahim duvarına tutunmaya çalışıyor. Bu süreçte vücudunuz hamileliği desteklemek için rahim duvarını kalın tutar.";
+        tipsText = "2 haftalık bu bekleme süreci duygusal olarak zorlayıcı olabilir. Belirti aramaya çalışmayın (çoğu PMS belirtisiyle aynıdır) ve adet gecikmesini sakince bekleyin.";
+        tipMessage.title = "Sabır ve Pozitiflik";
+        tipMessage.text = "Sürekli vücudunuzu dinlemek yerine zihninizi meşgul edecek güzel aktivitelere odaklanın.";
+      }
+
+      setCoachMessage(tipMessage.text);
+      setDynamicInfo({ bodyDev: bodyDevText, tips: tipsText });
+      setDailyTip(tipMessage);
       // Fallback blogs
       setBlogs([
         { id: 1, title: 'Doğurganlığı Artıran Besinler', summary: 'Gebe kalma şansınızı artıran yiyecekler.', tags: ['Beslenme', 'Doğurganlık'], emoji: '🥑' },
@@ -270,13 +296,17 @@ export default function TTCDashboard({ profile, onReset }: { profile: any, onRes
 
           {/* Minimalist Info Texts */}
           <div style={{ marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '1.8rem' }}>
-            <div>
+            <div style={{ background: 'white', padding: '1.5rem', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.03)' }}>
               <h4 style={{ margin: '0 0 0.6rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-primary)', fontSize: '1.2rem', fontWeight: '700' }}><Info size={20} /> Vücudunuzda Neler Oluyor?</h4>
-              <p style={{ margin: 0, fontSize: '1.05rem', lineHeight: 1.6, color: 'var(--color-text-main)' }}>{isAILoading ? 'Yapay Zeka Analiz Ediyor...' : dynamicInfo.bodyDev}</p>
+              <div className="markdown-content" style={{ margin: 0, fontSize: '1.05rem', lineHeight: 1.6, color: 'var(--color-text-main)' }}>
+                {isAILoading ? 'Yapay Zeka Analiz Ediyor...' : <ReactMarkdown>{dynamicInfo.bodyDev}</ReactMarkdown>}
+              </div>
             </div>
-            <div>
-              <h4 style={{ margin: '0 0 0.6rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-secondary)', fontSize: '1.2rem', fontWeight: '700' }}><Sparkles size={20} /> Doğurganlığı Artırmak İçin</h4>
-              <p style={{ margin: 0, fontSize: '1.05rem', lineHeight: 1.6, color: 'var(--color-text-main)' }}>{isAILoading ? 'Yapay Zeka Analiz Ediyor...' : dynamicInfo.tips}</p>
+            <div style={{ background: 'white', padding: '1.5rem', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.03)' }}>
+              <h4 style={{ margin: '0 0 0.6rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-secondary)', fontSize: '1.2rem', fontWeight: '700' }}><Sparkles size={20} /> Tavsiyeler & İpuçları</h4>
+              <div className="markdown-content" style={{ margin: 0, fontSize: '1.05rem', lineHeight: 1.6, color: 'var(--color-text-main)' }}>
+                {isAILoading ? 'Yapay Zeka Analiz Ediyor...' : <ReactMarkdown>{dynamicInfo.tips}</ReactMarkdown>}
+              </div>
             </div>
           </div>
 

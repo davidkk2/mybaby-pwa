@@ -55,14 +55,38 @@ export default function BornDashboard({ profile, onReset }: { profile: any, onRe
   useEffect(() => {
     const fetchAIInsights = async () => {
       setIsAILoading(true);
-      // Yapay Zeka servisi devre dışı olduğu için statik verilerle devam ediyoruz.
-      setCoachMessage("Bugün bebeğinizle birlikte sadece anın tadını çıkarın. Harika bir iş çıkarıyorsunuz.");
-      setDynamicInfo({ babyDev: "Bebeğiniz her gün yeni şeyler öğrenerek büyümeye devam ediyor.", tips: "Kendinize şefkat gösterin, dinlenmek en doğal ihtiyacınız." });
-      setDailyTip({
-         title: "Derin Bir Nefes Alın",
-         text: "Anneliğin ilk günleri zorlayıcı olabilir. Siz harika bir annesiniz, yardıma ihtiyaç duymak çok normal.",
+      // AI servisi devre dışı olduğu için yaşa göre statik verilerle devam ediyoruz.
+      let babyDevText = "Bebeğiniz dünyaya alışıyor. Her gün yeni bir şeyler öğreniyor.";
+      let tipsText = "Kendi sağlığınıza dikkat etmeyi ihmal etmeyin. Uyuduğunda siz de uyuyun.";
+      let tipMessage = {
+         title: "Kendinize Zaman Ayırın",
+         text: "Annelik yorucu olabilir, bebeğiniz uyuduğunda siz de mutlaka dinlenin.",
          icon: <Heart size={24} color="var(--color-primary)" />
-      });
+      };
+
+      if (babyAgeMonths === 0 && babyAgeWeeks < 4) {
+        babyDevText = "**Yenidoğan Dönemi (0-1 Ay):**\nBebeğiniz şu an sadece uyumak, beslenmek ve size yakın olmak istiyor. Gözleri henüz net görmese de kokunuzu ve sesinizi çok iyi tanıyor.\n\nSık sık emmek isteyebilir, bu onun hem beslenmesi hem de güvende hissetmesi için gereklidir.";
+        tipsText = "**Toparlanma Süreci:**\nVücudunuz büyük bir değişimden çıktı. Lohusalık kanamalarınız (löşi) ve rahim kasılmalarınız normaldir. Lütfen sadece bebeğinizle ilgilenin ve ev işlerini başkalarına bırakın.\n\nBol su için ve emziriyorsanız iyi beslenmeye özen gösterin.";
+      } else if (babyAgeMonths >= 1 && babyAgeMonths < 3) {
+        babyDevText = "**1-3 Aylık Gelişim:**\nBebeğiniz yavaş yavaş etrafını keşfetmeye başlıyor! İlk bilinçli gülümsemesini (sosyal gülümseme) bu dönemde görebilirsiniz.\n\nKafasını kısa süreliğine dik tutmaya başlayacak. Ona bol bol şarkı söyleyin ve konuşun.";
+        tipsText = "**Rutin Oluşturma:**\nGaz sancıları (kolik) bu dönemde zirve yapabilir. Sabırlı olun. Uyku düzeni henüz oturmamış olsa da, gece-gündüz farkını öğretmek için gündüzleri aydınlık, geceleri loş ortam yaratın.";
+      } else if (babyAgeMonths >= 3 && babyAgeMonths < 6) {
+        babyDevText = "**3-6 Aylık Gelişim:**\nArtık etrafıyla tam bir etkileşim içinde! Kendi ellerini keşfetti ve her şeyi ağzına götürmeye başlıyor. Kahkahalar atabilir ve nesnelere uzanıp tutabilir.\n\nYüzüstü yatarken kollarından destek alarak göğsünü kaldırabilir.";
+        tipsText = "**Ek Gıdaya Hazırlık:**\nEmzirme veya formül mama düzeniniz oturdu. Yakında ek gıda serüveni başlayacak. Bu dönemde uyku gerilemesi yaşayabilirsiniz, karanlık ve sessiz bir oda uykuya geçişi kolaylaştırır.";
+      } else if (babyAgeMonths >= 6 && babyAgeMonths < 9) {
+        babyDevText = "**6-9 Aylık Gelişim:**\nHareketlenme zamanı! Bebeğiniz destekli veya desteksiz oturmaya başlayabilir. Hatta emekleme denemeleri veya geri geri sürünmeler görülebilir.\n\nYabancı korkusu bu dönemde başlayabilir, size eskisinden daha çok yapışmak isteyebilir.";
+        tipsText = "**Ek Gıda Serüveni:**\nKatı gıdalarla tanışma başladı! BLW (Bebek liderliğinde beslenme) veya püre yöntemiyle yeni tatlar deniyorsunuz. Süt hala ana öğündür, katı gıdalar şu an sadece tadımdır.";
+      } else if (babyAgeMonths >= 9 && babyAgeMonths < 12) {
+        babyDevText = "**9-12 Aylık Gelişim:**\nKüçük bir kaşif! Tutunarak ayağa kalkabilir, eşyaların etrafında sıralayabilir. \"Ba-ba\", \"de-de\" gibi anlamlı veya anlamsız heceler çıkarmaya başlar.\n\nİnce motor becerileri gelişiyor, küçük cisimleri parmaklarıyla (kerpeten tutuşu) alabilir.";
+        tipsText = "**Ev Güvenliği:**\nEviniz artık bir oyun alanı. Prizleri kapatın, sivri köşeleri korumaya alın. Kendi kendinize ayıracağınız vakitler azalmış olabilir, bu yüzden kısa molalar yaratmayı ihmal etmeyin.";
+      } else {
+        babyDevText = "**1 Yaş ve Üzeri Gelişim:**\nTebrikler! Artık bir bebek değil, \"yürümeye başlayan çocuk (toddler)\" annesisiniz! İlk adımlarını atmış veya atmak üzere olabilir. Kendi bağımsızlığını ilan etmeye ve inatlaşmaya başlayabilir.";
+        tipsText = "**Sınırlar ve İletişim:**\nOna güvenli sınırlar çizme zamanı. Öfke krizleri (tantrum) yaşanabilir. Olaylara sakin yaklaşın. Sizin de sosyal hayata daha rahat adapte olabileceğiniz bir döneme giriyorsunuz.";
+      }
+
+      setCoachMessage(tipMessage.text);
+      setDynamicInfo({ babyDev: babyDevText, tips: tipsText });
+      setDailyTip(tipMessage);
       // Fallback blogs
       setBlogs([
         { id: 1, title: 'Yenidoğan Uyku Düzeni', summary: 'Bebeğinizin uyku saatlerini nasıl düzene sokarsınız?', tags: ['Bebek', 'Uyku'], emoji: '😴' },
@@ -232,13 +256,17 @@ export default function BornDashboard({ profile, onReset }: { profile: any, onRe
 
           {/* Minimalist Info Texts */}
           <div style={{ marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '1.8rem' }}>
-            <div>
+            <div style={{ background: 'white', padding: '1.5rem', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.03)' }}>
               <h4 style={{ margin: '0 0 0.6rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-primary)', fontSize: '1.2rem', fontWeight: '700' }}><Baby size={20} /> Bebeğinizin Gelişimi</h4>
-              <p style={{ margin: 0, fontSize: '1.05rem', lineHeight: 1.6, color: 'var(--color-text-main)' }}>{isAILoading ? 'Yapay Zeka Analiz Ediyor...' : dynamicInfo.babyDev}</p>
+              <div className="markdown-content" style={{ margin: 0, fontSize: '1.05rem', lineHeight: 1.6, color: 'var(--color-text-main)' }}>
+                {isAILoading ? 'Yapay Zeka Analiz Ediyor...' : <ReactMarkdown>{dynamicInfo.babyDev}</ReactMarkdown>}
+              </div>
             </div>
-            <div>
+            <div style={{ background: 'white', padding: '1.5rem', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.03)' }}>
               <h4 style={{ margin: '0 0 0.6rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-secondary)', fontSize: '1.2rem', fontWeight: '700' }}><Heart size={20} /> Annelik & Toparlanma</h4>
-              <p style={{ margin: 0, fontSize: '1.05rem', lineHeight: 1.6, color: 'var(--color-text-main)' }}>{isAILoading ? 'Yapay Zeka Analiz Ediyor...' : dynamicInfo.tips}</p>
+              <div className="markdown-content" style={{ margin: 0, fontSize: '1.05rem', lineHeight: 1.6, color: 'var(--color-text-main)' }}>
+                {isAILoading ? 'Yapay Zeka Analiz Ediyor...' : <ReactMarkdown>{dynamicInfo.tips}</ReactMarkdown>}
+              </div>
             </div>
           </div>
 
