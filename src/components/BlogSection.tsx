@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Clock, X, Sparkles } from 'lucide-react';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import ReactMarkdown from 'react-markdown';
 
 export interface BlogEntry {
@@ -28,55 +27,11 @@ export default function BlogSection({ blogs, profile, isLoading }: BlogSectionPr
     setIsArticleLoading(true);
     setArticleContent("");
 
-    // Check cache first
-    const cacheKey = `mybaby_blog_${blog.id}_${blog.title.slice(0,20)}_${new Date().toDateString()}`;
-    const cached = sessionStorage.getItem(cacheKey);
-    if (cached) {
-      setArticleContent(cached);
+    // Yapay Zeka servisi devre dışı.
+    setTimeout(() => {
+      setArticleContent(`### ${blog.title}\n\n${blog.summary}\n\n_Sistemimizde yapılan altyapı çalışmaları nedeniyle bu yazının tamamı şu an okunamamaktadır. Lütfen daha sonra tekrar deneyin._`);
       setIsArticleLoading(false);
-      return;
-    }
-
-    try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
-      const isTTC = profile.status === 'trying';
-
-      const prompt = `Sen uzman bir ${isTTC ? 'doğurganlık ve kadın sağlığı' : 'hamilelik ve anne-bebek sağlığı'} blog yazarısın. Türkçe yaz.
-
-Kullanıcı Profili:
-- Durum: ${isTTC ? 'Hamile kalmaya çalışıyor' : `${profile.weeks || '?'} haftalık hamile`}
-- Yaş: ${profile.age || '?'}
-- Çalışıyor mu: ${profile.isWorking ? 'Evet' : 'Hayır'}
-- Ana Hedef: ${profile.primaryGoal || '?'}
-- Deneme Süresi: ${profile.tryDuration || '?'}
-
-Blog Başlığı: "${blog.title}"
-Blog Özeti: "${blog.summary}"
-
-Bu başlık ve özete sadık kalarak, kullanıcının profiline özel çok tatlı, samimi ve bol emojili bir blog/dergi yazısı yaz.
-
-Kurallar:
-- Bilimsel verileri çok sıkıcı olmayan, eğlenceli ve sıcak bir sohbet havasında anlat.
-- Kullanıcıya "sen" diye hitap et ve bol bol moral ver.
-- Uzun paragraflardan kesinlikle kaçın. Okuması çok kolay, hap bilgiler şeklinde olsun (Maksimum 300 kelime).
-- Markdown formatını TAM olarak kullan (kalın başlıklar, alt başlıklar, listeler, bullet pointler).
-- Yazının sonunda mutlaka mini bir motivasyon cümlesi olsun.`;
-
-      const result = await model.generateContent(prompt);
-      const text = result.response.text();
-      setArticleContent(text);
-      setIsArticleLoading(false);
-
-      // Cache the article
-      try { sessionStorage.setItem(cacheKey, text); } catch(e) {}
-
-    } catch (err) {
-      setArticleContent("Yazı yüklenirken bir sorun oluştu. Lütfen daha sonra tekrar deneyin.");
-      setIsArticleLoading(false);
-    }
+    }, 800);
   };
 
   const tagColors: Record<string, string> = {
